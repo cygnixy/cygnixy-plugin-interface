@@ -152,39 +152,6 @@ impl PluginManager {
         Ok(())
     }
 
-    /// Registers Lua functions from a single plugin instance into the Lua runtime.
-    ///
-    /// # Parameters
-    /// - `lua`: The Lua state where the plugin's functions should be registered.
-    /// - `plugin`: A reference to the plugin instance implementing the `PluginLua` trait.
-    ///
-    /// # Returns
-    /// - `Ok(())` if the functions were successfully registered.
-    /// - `Err(mlua::Error)` if an error occurs during function registration.
-    ///
-    /// # Example
-    /// ```rust
-    /// let lua = Lua::new();
-    /// let plugin: Box<dyn PluginLua> = Box::new(MyPlugin::new());
-    /// plugin_manager.register_plugin_functions(&lua, plugin.as_ref())?;
-    /// ```
-    ///
-    /// # Notes
-    /// - A separate Lua table is created for the plugin, containing its functions.
-    /// - The table is registered in the global namespace using the plugin's name as the key.
-    pub fn register_plugin_functions(
-        &self,
-        lua: &Lua,
-        plugin: &dyn PluginLua,
-    ) -> Result<(), mlua::Error> {
-        let plugin_table = lua.create_table()?;
-        for (name, function) in plugin.get_lua_functions(lua) {
-            plugin_table.set(name, function)?;
-        }
-        lua.globals().set(plugin.name(), plugin_table)?;
-        Ok(())
-    }
-
     /// Registers all Lua functions from all loaded plugins with the given Lua state.
     ///
     /// # Parameters
