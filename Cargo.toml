@@ -7,7 +7,7 @@ license = "MIT"
 description = "A plugin interface for the Cygnixy framework, enabling dynamic Lua plugin integration and management."
 repository = "https://github.com/cygnixy/cygnixy-plugin-interface"
 readme = "README.md"
-keywords = ["cygnixy", "eve online", "framework", "bot", "plugin", "lua"]
+keywords = ["cygnixy", "eve online", "framework", "plugin", "lua"]
 
 [dependencies]
 libloading = "0.8"
