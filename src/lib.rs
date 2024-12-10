@@ -124,6 +124,67 @@ impl PluginManager {
         self.plugins.get(name).map(|plugin| plugin.as_ref())
     }
 
+    /// Registers a plugin instance directly, bypassing file loading.
+    ///
+    /// # Parameters
+    /// - `plugin`: A boxed instance of a plugin implementing the `PluginLua` trait.
+    ///
+    /// # Returns
+    /// - `Ok(())` if the plugin was successfully registered.
+    /// - `Err(Box<dyn Error>)` if an error occurs during plugin initialization.
+    ///
+    /// # Example
+    /// ```rust
+    /// let plugin: Box<dyn PluginLua> = Box::new(MyPlugin::new());
+    /// plugin_manager.register_plugin_instance(plugin)?;
+    /// ```
+    ///
+    /// # Notes
+    /// - The plugin's `on_load` method is called during this process to initialize the plugin.
+    /// - The plugin is stored in the internal plugin map for future reference.
+    pub fn register_plugin_instance(
+        &mut self,
+        mut plugin: Box<dyn PluginLua>,
+    ) -> Result<(), Box<dyn Error>> {
+        let plugin_name = plugin.name().to_string();
+        plugin.on_load()?; // Initialize the plugin
+        self.plugins.insert(plugin_name, plugin);
+        Ok(())
+    }
+
+    /// Registers Lua functions from a single plugin instance into the Lua runtime.
+    ///
+    /// # Parameters
+    /// - `lua`: The Lua state where the plugin's functions should be registered.
+    /// - `plugin`: A reference to the plugin instance implementing the `PluginLua` trait.
+    ///
+    /// # Returns
+    /// - `Ok(())` if the functions were successfully registered.
+    /// - `Err(mlua::Error)` if an error occurs during function registration.
+    ///
+    /// # Example
+    /// ```rust
+    /// let lua = Lua::new();
+    /// let plugin: Box<dyn PluginLua> = Box::new(MyPlugin::new());
+    /// plugin_manager.register_plugin_functions(&lua, plugin.as_ref())?;
+    /// ```
+    ///
+    /// # Notes
+    /// - A separate Lua table is created for the plugin, containing its functions.
+    /// - The table is registered in the global namespace using the plugin's name as the key.
+    pub fn register_plugin_functions(
+        &self,
+        lua: &Lua,
+        plugin: &dyn PluginLua,
+    ) -> Result<(), mlua::Error> {
+        let plugin_table = lua.create_table()?;
+        for (name, function) in plugin.get_lua_functions(lua) {
+            plugin_table.set(name, function)?;
+        }
+        lua.globals().set(plugin.name(), plugin_table)?;
+        Ok(())
+    }
+
     /// Registers all Lua functions from all loaded plugins with the given Lua state.
     ///
     /// # Parameters
