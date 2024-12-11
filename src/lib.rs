@@ -24,7 +24,7 @@ pub trait PluginLua: Send + Sync {
     /// Returns a map of Lua functions to be registered with the Lua state.
     ///
     /// Each function is associated with a name, allowing it to be called from Lua scripts.
-    fn get_lua_functions(&self, lua: &Lua) -> HashMap<String, mlua::Function>;
+    fn get_lua_functions(&self, lua: &Lua, name: &str) -> HashMap<String, mlua::Function>;
 }
 
 /// Manages loading, unloading, and interacting with Lua plugins.
@@ -160,11 +160,11 @@ impl PluginManager {
     /// # Returns
     /// - `Ok(())` if all functions are registered successfully.
     /// - `Err` if there is an error during registration.
-    pub fn register_all_plugins(&self, lua: &Lua) -> Result<(), Box<dyn Error>> {
+    pub fn register_all_plugins(&self, lua: &Lua, name: &str) -> Result<(), Box<dyn Error>> {
         for plugin in self.plugins.values() {
             trace!("Registering functions for plugin '{}'.", plugin.name());
             let plugin_table = lua.create_table()?;
-            for (name, function) in plugin.get_lua_functions(lua) {
+            for (name, function) in plugin.get_lua_functions(lua, name) {
                 plugin_table.set(name, function)?;
             }
             lua.globals().set(plugin.name(), plugin_table)?;
